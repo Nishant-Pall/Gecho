@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
-func main() {
+func setupCon() {
 	fmt.Println("Initiating connection...")
 	l, err := net.Listen("tcp", ":6379")
 	if err != nil {
@@ -39,4 +42,28 @@ func main() {
 		conn.Write([]byte("+OK\r\n"))
 	}
 
+}
+
+func main() {
+	input := "$7\r\nNishant\r\n"
+	reader := bufio.NewReader(strings.NewReader(input))
+
+	b, _ := reader.ReadByte()
+
+	if b != '$' {
+		fmt.Println("Invalid type, expecting bulk strings only")
+		os.Exit(1)
+	}
+
+	size, _ := reader.ReadByte()
+	sizeStr, _ := strconv.ParseInt(string(size), 10, 64)
+	fmt.Println(sizeStr)
+
+	reader.ReadByte()
+	reader.ReadByte()
+
+	name := make([]byte, sizeStr)
+	reader.Read(name)
+
+	fmt.Println(string(name))
 }
