@@ -90,11 +90,14 @@ func (r *Resp) readBulk() (Value, error) {
 
 	r.reader.Read(bulk)
 	v.bulk = string(bulk)
+	// trailing crlf
 	r.readLine()
 
 	return v, nil
 }
 
+// *2\r\n$5\r\nArushi\r\n$7\r\nNishant
+// *2 $5 Arushi $7 Nishant
 func (r *Resp) Read() (Value, error) {
 	_type, err := r.reader.ReadByte()
 
@@ -110,4 +113,64 @@ func (r *Resp) Read() (Value, error) {
 		fmt.Printf("Unkown type for %v", string(_type))
 		return Value{}, nil
 	}
+}
+
+func (v Value) Marshall() []byte {
+	switch v.typ {
+	case "array":
+		return v.marshallArray()
+	case "bulk":
+		return v.marshallBulk()
+	case "string":
+		return v.marshallString()
+	case "null":
+		return v.marshallNull()
+	case "error":
+		return v.marshallError()
+	default:
+		return []byte{}
+	}
+}
+
+func (v Value) marshallString() []byte {
+	var bytes []byte
+	bytes = append(bytes, STRING)
+	bytes = append(bytes, v.str...)
+	bytes = append(bytes, '\r', '\n')
+
+	return bytes
+}
+
+func (v Value) marshallBulk() []byte {
+	var bytes []byte
+	bytes = append(bytes, BULK)
+	bytes = append(bytes, strconv.Itoa(len(v.bulk))...)
+	bytes = append(bytes, '\r', '\n')
+	bytes = append(bytes, v.bulk...)
+	bytes = append(bytes, '\r', '\n')
+	return bytes
+}
+
+func (v Value) marshallArray() []byte {
+	var bytes []byte
+	len := len(v.array)
+	bytes = append(bytes, ARRAY)
+	bytes = append(bytes, strconv.Itoa(len)...)
+	bytes = append(bytes, '\r', '\n')
+	for i := 0; i < len; i++ {
+		bytes = append(bytes, v.array[i].Marshall()...)
+	}
+	return bytes
+}
+
+func (v Value) marshallError() []byte {
+	var bytes []byte
+	bytes = append(bytes, ERROR)
+	bytes = append(bytes, v.str...)
+	bytes = append(bytes, '\r', '\n')
+	return bytes
+}
+
+func (v Value) marshallNull() []byte {
+	return []byte("$-1\r\n")
 }
