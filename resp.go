@@ -27,6 +27,14 @@ type Resp struct {
 	reader *bufio.Reader
 }
 
+type Writer struct {
+	writer io.Writer
+}
+
+func NewWriter(w io.Writer) *Writer {
+	return &Writer{writer: w}
+}
+
 func NewResp(rd io.Reader) *Resp {
 	return &Resp{reader: bufio.NewReader(rd)}
 }
@@ -115,24 +123,34 @@ func (r *Resp) Read() (Value, error) {
 	}
 }
 
-func (v Value) Marshall() []byte {
+func (w *Writer) Write(v Value) error {
+	var bytes = v.Marshal()
+
+	_, err := w.writer.Write(bytes)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v Value) Marshal() []byte {
 	switch v.typ {
 	case "array":
-		return v.marshallArray()
+		return v.marshalArray()
 	case "bulk":
-		return v.marshallBulk()
+		return v.marshalBulk()
 	case "string":
-		return v.marshallString()
+		return v.marshalString()
 	case "null":
-		return v.marshallNull()
+		return v.marshalNull()
 	case "error":
-		return v.marshallError()
+		return v.marshalError()
 	default:
 		return []byte{}
 	}
 }
 
-func (v Value) marshallString() []byte {
+func (v Value) marshalString() []byte {
 	var bytes []byte
 	bytes = append(bytes, STRING)
 	bytes = append(bytes, v.str...)
@@ -141,7 +159,7 @@ func (v Value) marshallString() []byte {
 	return bytes
 }
 
-func (v Value) marshallBulk() []byte {
+func (v Value) marshalBulk() []byte {
 	var bytes []byte
 	bytes = append(bytes, BULK)
 	bytes = append(bytes, strconv.Itoa(len(v.bulk))...)
@@ -151,19 +169,19 @@ func (v Value) marshallBulk() []byte {
 	return bytes
 }
 
-func (v Value) marshallArray() []byte {
+func (v Value) marshalArray() []byte {
 	var bytes []byte
 	len := len(v.array)
 	bytes = append(bytes, ARRAY)
 	bytes = append(bytes, strconv.Itoa(len)...)
 	bytes = append(bytes, '\r', '\n')
 	for i := 0; i < len; i++ {
-		bytes = append(bytes, v.array[i].Marshall()...)
+		bytes = append(bytes, v.array[i].Marshal()...)
 	}
 	return bytes
 }
 
-func (v Value) marshallError() []byte {
+func (v Value) marshalError() []byte {
 	var bytes []byte
 	bytes = append(bytes, ERROR)
 	bytes = append(bytes, v.str...)
@@ -171,6 +189,6 @@ func (v Value) marshallError() []byte {
 	return bytes
 }
 
-func (v Value) marshallNull() []byte {
+func (v Value) marshalNull() []byte {
 	return []byte("$-1\r\n")
 }
