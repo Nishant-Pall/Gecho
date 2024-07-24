@@ -6,13 +6,62 @@ import (
 )
 
 var Handlers = map[string]func([]Value) Value{
-	"PING": ping,
-	"SET":  set,
-	"GET":  get,
+	"PING":    ping,
+	"SET":     set,
+	"GET":     get,
+	"HSET":    hset,
+	"HGET":    hget,
+	"HGETALL": hgetall,
 }
 
 var SETs = map[string]string{}
 var SETmut sync.RWMutex
+
+var HSETs = map[string]map[string]string{}
+var HSETmut sync.RWMutex
+
+func hset(args []Value) Value {
+	if len(args) != 3 {
+		return Value{typ: "error", str: "invalid number of arguments for `hset` command"}
+	}
+
+	fmt.Println(args)
+
+	hash := args[0].bulk
+	key2 := args[1].bulk
+	value := args[2].bulk
+
+	HSETmut.Lock()
+	if _, ok := HSETs[hash]; !ok {
+		HSETs[hash] = map[string]string{}
+	}
+	HSETs[hash][key2] = value
+	HSETmut.Unlock()
+
+	return Value{typ: "string", str: "OK"}
+}
+func hget(args []Value) Value {
+	if len(args) != 2 {
+		return Value{typ: "error", str: "invalid number of arguments for `hget` command"}
+	}
+
+	hash := args[0].bulk
+	key := args[1].bulk
+
+	HSETmut.RLock()
+	value, ok := HSETs[hash][key]
+	HSETmut.RUnlock()
+
+	if !ok {
+		return Value{typ: "error", str: "no value found for key"}
+	}
+
+	return Value{typ: "string", str: value}
+}
+func hgetall(args []Value) Value {
+	vmap := HSETs
+	return Value{typ: "string", str: fmt.Sprint(vmap)}
+}
 
 func get(args []Value) Value {
 	if len(args) != 1 {
