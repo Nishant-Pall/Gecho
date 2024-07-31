@@ -41,12 +41,12 @@ func NewResp(rd io.Reader) *Resp {
 
 func (r *Resp) readLine() (line []byte, n int, err error) {
 	for {
-		byt, err := r.reader.ReadByte()
+		b, err := r.reader.ReadByte()
 		if err != nil {
 			return nil, 0, err
 		}
 		n += 1
-		line = append(line, byt)
+		line = append(line, b)
 		if len(line) >= 2 && line[len(line)-2] == '\r' {
 			break
 		}
@@ -67,45 +67,41 @@ func (r *Resp) readInteger() (x int, n int, err error) {
 }
 
 func (r *Resp) readArray() (Value, error) {
-	val := Value{}
-	val.typ = "Array"
+	v := Value{}
+	v.typ = "Array"
 
 	// read length of array
-	arrayLen, _, err := r.readInteger()
+	len, _, err := r.readInteger()
 	if err != nil {
-		return val, err
+		return v, err
 	}
-
-	val.array = make([]Value, 0)
-
-	for index := 0; index < arrayLen; index++ {
+	v.array = make([]Value, 0)
+	for i := 0; i < len; i++ {
 		val, err := r.Read()
 		if err != nil {
-			return val, err
+			return v, err
 		}
 
-		val.array = append(val.array, val)
+		v.array = append(v.array, val)
 	}
-	return val, nil
+	return v, nil
 }
 
 func (r *Resp) readBulk() (Value, error) {
-	val := Value{}
-	val.typ = "Bulk"
-
-	bulkLen, _, err := r.readInteger()
+	v := Value{}
+	v.typ = "Bulk"
+	len, _, err := r.readInteger()
 	if err != nil {
-		return val, err
+		return v, err
 	}
-
-	bulk := make([]byte, bulkLen)
+	bulk := make([]byte, len)
 
 	r.reader.Read(bulk)
-	val.bulk = string(bulk)
+	v.bulk = string(bulk)
 	// trailing crlf
 	r.readLine()
 
-	return val, nil
+	return v, nil
 }
 
 // *2\r\n$5\r\nArushi\r\n$7\r\nNishant
