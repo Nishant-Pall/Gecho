@@ -14,6 +14,7 @@ var Handlers = map[string]func([]Value) Value{
 	"HGET":    hget,
 	"HGETALL": hgetall,
 	"INCR":    increment,
+	"DCR":     decrement,
 }
 
 var SETs = map[string]string{}
@@ -21,6 +22,25 @@ var SETmut sync.RWMutex
 
 var HSETs = map[string]map[string]string{}
 var HSETmut sync.RWMutex
+
+func decrement(args []Value) Value {
+	if len(args) != 1 {
+		return Value{typ: "error", str: "invalid number of arguments for `incr` command"}
+	}
+
+	key := args[0].bulk
+
+	if _, ok := SETs[key]; !ok {
+		return Value{typ: "error", str: "Key does not exist"}
+	}
+
+	counter, _ := strconv.Atoi(SETs[key])
+	counter = counter - 1
+
+	SETs[key] = strconv.Itoa(counter)
+
+	return Value{typ: "string", str: "OK"}
+}
 
 func increment(args []Value) Value {
 	if len(args) != 1 {
