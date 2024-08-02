@@ -7,14 +7,15 @@ import (
 )
 
 var Handlers = map[string]func([]Value) Value{
-	"PING":    ping,
-	"SET":     set,
-	"GET":     get,
-	"HSET":    hset,
-	"HGET":    hget,
-	"HGETALL": hgetall,
-	"INCR":    increment,
-	"DCR":     decrement,
+	"PING":     ping,
+	"SET":      set,
+	"GET":      get,
+	"HSET":     hset,
+	"HGET":     hget,
+	"HGETALL":  hgetall,
+	"INCR":     increment,
+	"DCR":      decrement,
+	"FLUSHALL": flushall,
 }
 
 var SETs = map[string]string{}
@@ -40,6 +41,18 @@ func decrement(args []Value) Value {
 	SETs[key] = strconv.Itoa(counter)
 
 	return Value{typ: "string", str: "OK"}
+}
+
+func flushall(args []Value) Value {
+	SETmut.Lock()
+	SETs = map[string]string{}
+	SETmut.Unlock()
+
+	HSETmut.Lock()
+	HSETs = map[string]map[string]string{}
+	HSETmut.Unlock()
+
+	return Value{typ: "string", str: "Flushed all"}
 }
 
 func increment(args []Value) Value {
