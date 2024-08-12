@@ -107,7 +107,7 @@ func hget(args []Value) Value {
 	HSETmut.RUnlock()
 
 	if !ok {
-		return Value{typ: "error", str: "no value found for key"}
+		return Value{typ: "error", str: fmt.Sprintf("no value found for key: %s", hash)}
 	}
 
 	return Value{typ: "string", str: value}
@@ -129,7 +129,7 @@ func get(args []Value) Value {
 	SETmut.RUnlock()
 
 	if !ok {
-		return Value{typ: "error", str: "no value found for key"}
+		return Value{typ: "error", str: fmt.Sprintf("no value found for key: %s", key)}
 	}
 
 	return Value{typ: "string", str: value}
