@@ -50,7 +50,7 @@ func main() {
 			return
 		}
 
-		if value.typ != "Array" {
+		if value.typ != "array" {
 			fmt.Println("Invalid request, expected array")
 			return
 		}

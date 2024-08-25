@@ -63,18 +63,19 @@ func (r *Resp) readInteger() (x int, n int, err error) {
 	if err != nil {
 		return 0, n, err
 	}
-	return int(i64), n, err
+	return int(i64), n, nil
 }
 
 func (r *Resp) readArray() (Value, error) {
 	v := Value{}
-	v.typ = "Array"
+	v.typ = "array"
 
 	// read length of array
 	len, _, err := r.readInteger()
 	if err != nil {
 		return v, err
 	}
+	// foreach line, parse and read the value
 	v.array = make([]Value, 0)
 	for i := 0; i < len; i++ {
 		val, err := r.Read()
@@ -82,6 +83,7 @@ func (r *Resp) readArray() (Value, error) {
 			return v, err
 		}
 
+		// append parsed value to array
 		v.array = append(v.array, val)
 	}
 	return v, nil
@@ -89,7 +91,7 @@ func (r *Resp) readArray() (Value, error) {
 
 func (r *Resp) readBulk() (Value, error) {
 	v := Value{}
-	v.typ = "Bulk"
+	v.typ = "bulk"
 	len, _, err := r.readInteger()
 	if err != nil {
 		return v, err
@@ -98,7 +100,7 @@ func (r *Resp) readBulk() (Value, error) {
 
 	r.reader.Read(bulk)
 	v.bulk = string(bulk)
-	// trailing crlf
+	// Read the trailing CRLF
 	r.readLine()
 
 	return v, nil
@@ -118,21 +120,12 @@ func (r *Resp) Read() (Value, error) {
 	case BULK:
 		return r.readBulk()
 	default:
-		fmt.Printf("Unkown type for %v", string(_type))
+		fmt.Printf("Unknown type: %v", string(_type))
 		return Value{}, nil
 	}
 }
 
-func (w *Writer) Write(v Value) error {
-	var bytes = v.Marshal()
-
-	_, err := w.writer.Write(bytes)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
+// Marshal Value to bytes
 func (v Value) Marshal() []byte {
 	switch v.typ {
 	case "array":
@@ -191,4 +184,15 @@ func (v Value) marshalError() []byte {
 
 func (v Value) marshalNull() []byte {
 	return []byte("$-1\r\n")
+}
+
+func (w *Writer) Write(v Value) error {
+	var bytes = v.Marshal()
+
+	_, err := w.writer.Write(bytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

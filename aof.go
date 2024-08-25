@@ -26,6 +26,7 @@ func NewAof(path string) (*Aof, error) {
 		rd:   bufio.NewReader(f),
 	}
 
+	// go routine to sync aof to disk every 1 second
 	go func() {
 		for {
 			aof.mu.Lock()
