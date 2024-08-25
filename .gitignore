@@ -1,3 +1,4 @@
 dump.rdb
 __debug*
 main
+*aof
