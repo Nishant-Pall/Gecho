@@ -97,7 +97,7 @@ func (r *Resp) readArray() (Value, error) {
 		if err != nil {
 			return v, err
 		}
-		v.array = append(v.array, val)
+		v.array[i] = val
 	}
 
 	return v, nil
@@ -192,4 +192,23 @@ func (v *Value) Marshall() []byte {
 		return []byte{}
 
 	}
+}
+
+type Writer struct {
+	writer io.Writer
+}
+
+func NewWriter(w io.Writer) *Writer {
+	return &Writer{writer: w}
+}
+
+func (w *Writer) Write(v Value) error {
+	bytes := v.Marshall()
+
+	_, err := w.writer.Write(bytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -27,13 +28,35 @@ func main() {
 
 		value, err := resp.Read()
 
+		fmt.Println(value)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		fmt.Printf("%v \r\n", value)
+		if value.typ != "array" {
+			fmt.Println("Invalid request, expected array")
+			return
+		}
 
-		conn.Write([]byte("+OK\r\n"))
+		if len(value.array) == 0 {
+			fmt.Println("Unexpected length")
+			return
+		}
+
+		command := strings.ToUpper(value.array[0].bulk)
+		args := value.array[1:]
+
+		writer := NewWriter(conn)
+		handler, ok := Handlers[command]
+		if !ok {
+			fmt.Println("Invalid command: ", command)
+			writer.Write(Value{typ: "string", str: ""})
+			continue
+		}
+
+		result := handler(args)
+		fmt.Println(result)
+		writer.Write(result)
 	}
 }
