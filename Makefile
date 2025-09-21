@@ -1,5 +1,5 @@
 echo-build:
-	go build main.go handler.go resp.go aof.go
+	go build main.go handler.go resp.go
 
 echo-run:
 	./main
