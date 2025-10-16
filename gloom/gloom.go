@@ -61,7 +61,7 @@ func (f *GloomFilter) CreateSeed() {
 	f.seed = maphash.MakeSeed()
 }
 
-func (f *GloomFilter) GenerateHashFunctions(hashes int, hasFunc GloomFilterHashFunc) {
+func (f *GloomFilter) GenerateHashFunctions(hashes int, hashFunc GloomFilterHashFunc) {
 	f.hashes = make([]func(string) uint64, hashes)
 
 	for index := range f.hashes {

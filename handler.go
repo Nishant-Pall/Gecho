@@ -1,14 +1,20 @@
 package main
 
-import "sync"
+import (
+	"strconv"
+	"sync"
+
+	"github.com/Nishant-Pall/Echo/gloom"
+)
 
 var Handlers = map[string]func([]Value) Value{
-	"PING":    pong,
-	"GET":     get,
-	"SET":     set,
-	"HGET":    hget,
-	"HSET":    hset,
-	"HGETALL": hgetall,
+	"PING":         pong,
+	"GET":          get,
+	"SET":          set,
+	"HGET":         hget,
+	"HSET":         hset,
+	"HGETALL":      hgetall,
+	"GLOOM_CREATE": createGloomFilter,
 }
 
 func pong([]Value) Value {
@@ -114,4 +120,24 @@ func hgetall(args []Value) Value {
 	}
 
 	return Value{typ: "array", array: values}
+}
+
+func createGloomFilter(args []Value) Value {
+
+	if len(args) != 2 {
+		return Value{typ: "error", str: "ERR wrong number of arguments for `gloom_create` command"}
+	}
+
+	len, err := strconv.Atoi(args[0].bulk)
+	if err != nil {
+		return Value{typ: "error", str: "Invalid input"}
+	}
+	hashes, err := strconv.Atoi(args[1].bulk)
+	if err != nil {
+		return Value{typ: "error", str: "Invalid input"}
+	}
+
+	gloomFilter := gloom.NewGloomFilter()
+	gloomFilter.InstantiateGloomFilter(len, hashes, gloom.MapHash)
+	return Value{typ: "string", str: "OK"}
 }
