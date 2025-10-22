@@ -1,6 +1,6 @@
 .PHONY: echo-build
 echo-build:
-	go build main.go handler.go resp.go
+	go build main.go handler.go resp.go aof.go
 
 .PHONY: echo-run
 echo-run:

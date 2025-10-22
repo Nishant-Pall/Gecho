@@ -14,7 +14,9 @@ var Handlers = map[string]func([]Value) Value{
 	"HGET":         hget,
 	"HSET":         hset,
 	"HGETALL":      hgetall,
-	"GLOOM_CREATE": createGloomFilter,
+	"GLOOM_CREATE": gloomCreate,
+	"GLOOM_ADD":    gloomAdd,
+	"GLOOM_CHECK":  gloomCheck,
 }
 
 func pong([]Value) Value {
@@ -122,7 +124,9 @@ func hgetall(args []Value) Value {
 	return Value{typ: "array", array: values}
 }
 
-func createGloomFilter(args []Value) Value {
+var gloomFilter = gloom.NewGloomFilter()
+
+func gloomCreate(args []Value) Value {
 
 	if len(args) != 2 {
 		return Value{typ: "error", str: "ERR wrong number of arguments for `gloom_create` command"}
@@ -137,7 +141,32 @@ func createGloomFilter(args []Value) Value {
 		return Value{typ: "error", str: "Invalid input"}
 	}
 
-	gloomFilter := gloom.NewGloomFilter()
 	gloomFilter.InstantiateGloomFilter(len, hashes, gloom.MapHash)
 	return Value{typ: "string", str: "OK"}
+}
+
+func gloomAdd(args []Value) Value {
+
+	if len(args) != 1 {
+		return Value{typ: "error", str: "ERR wrong number of arguments for `gloom_add` command"}
+	}
+
+	key := args[0].bulk
+
+	gloomFilter.AddItem(key)
+
+	return Value{typ: "string", str: "ADDED"}
+}
+
+func gloomCheck(args []Value) Value {
+
+	if len(args) != 1 {
+		return Value{typ: "error", str: "ERR wrong number of arguments for `gloom_check` command"}
+	}
+
+	key := args[0].bulk
+
+	ok := gloomFilter.CheckMembership(key)
+
+	return Value{typ: "string", str: strconv.FormatBool(ok)}
 }

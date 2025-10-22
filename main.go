@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const aofPath = "aof.go"
+const aofPath = "dump.aof"
 
 func main() {
 	listener, err := net.Listen("tcp", ":6379")
