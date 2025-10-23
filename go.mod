@@ -1,3 +1,3 @@
-module github.com/Nishant-Pall/Echo
+module github.com/Nishant-Pall/Gecho
 
 go 1.24
