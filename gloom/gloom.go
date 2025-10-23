@@ -99,18 +99,3 @@ func (f *GloomFilter) CheckMembership(s string) bool {
 func (f *GloomFilter) ModHash(hash uint64) uint64 {
 	return hash % uint64(f.len)
 }
-
-// func test() {
-// 	len := 40
-// 	hashes := 5
-
-// 	gloomFilter := gloom.NewGloomFilter()
-// 	gloomFilter.InstantiateGloomFilter(len, hashes, gloom.MapHash)
-
-// 	gloomFilter.AddItem("NISHANT")
-// 	gloomFilter.AddItem("ARUSHI")
-
-// 	fmt.Println(gloomFilter.CheckMembership("NISHANT"))
-// 	fmt.Println(gloomFilter.CheckMembership("ARUSH1"))
-
-//
