@@ -6,6 +6,12 @@ import (
 	"math/rand/v2"
 )
 
+type _GloomFilter interface {
+	AddItem(s string) error
+	RemoveItem(s string) error
+	Lookup(s string) (bool, error)
+}
+
 type GloomFilter struct {
 	gloomArr []uint64
 	seed     maphash.Seed

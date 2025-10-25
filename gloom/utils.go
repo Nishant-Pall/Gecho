@@ -2,6 +2,8 @@ package gloom
 
 import "hash/fnv"
 
+type GloomFilterHashFunc func(*GloomFilter, string) uint64
+
 func NewGloomFilter() *GloomFilter {
 	return new(GloomFilter)
 }
@@ -22,5 +24,3 @@ func BasicHash(f *GloomFilter, s string) uint64 {
 
 	return uint64(h.Sum32())
 }
-
-type GloomFilterHashFunc func(*GloomFilter, string) uint64
