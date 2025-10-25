@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Nishant-Pall/Echo/gloom"
+	"github.com/Nishant-Pall/Gecho/gloom"
 )
 
 var Handlers = map[string]func([]Value) Value{
@@ -141,7 +141,7 @@ func gloomCreate(args []Value) Value {
 		return Value{typ: "error", str: "Invalid input"}
 	}
 
-	gloomFilter.InstantiateGloomFilter(len, hashes, gloom.MapHash)
+	gloomFilter.CreateGloomFilter(len, hashes, gloom.MapHash)
 	return Value{typ: "string", str: "OK"}
 }
 
