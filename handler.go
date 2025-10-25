@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 
@@ -16,7 +17,8 @@ var Handlers = map[string]func([]Value) Value{
 	"HGETALL":      hgetall,
 	"GLOOM_CREATE": gloomCreate,
 	"GLOOM_ADD":    gloomAdd,
-	"GLOOM_CHECK":  gloomCheck,
+	"GLOOM_DELETE": gloomDelete,
+	"GLOOM_LOOKUP": gloomLookup,
 }
 
 func pong([]Value) Value {
@@ -124,7 +126,7 @@ func hgetall(args []Value) Value {
 	return Value{typ: "array", array: values}
 }
 
-var gloomFilter = gloom.NewGloomFilter()
+var gloomFilter *gloom.GloomFilter
 
 func gloomCreate(args []Value) Value {
 
@@ -134,18 +136,24 @@ func gloomCreate(args []Value) Value {
 
 	len, err := strconv.Atoi(args[0].bulk)
 	if err != nil {
-		return Value{typ: "error", str: "Invalid input"}
+		return Value{typ: "error", str: "Invalid input: length of gloom array"}
 	}
 	hashes, err := strconv.Atoi(args[1].bulk)
 	if err != nil {
-		return Value{typ: "error", str: "Invalid input"}
+		return Value{typ: "error", str: "Invalid input: number of hashes"}
 	}
 
-	gloomFilter.CreateGloomFilter(len, hashes, gloom.MapHash)
+	fmt.Printf("%v", gloomFilter)
+	gloomFilter = gloom.NewGloomFilter()
+	gloomFilter.CreateGloomFilter(uint64(len), uint64(hashes), gloom.MapHash)
 	return Value{typ: "string", str: "OK"}
 }
 
 func gloomAdd(args []Value) Value {
+
+	if gloomFilter == nil {
+		return Value{typ: "error", str: "Gloom Filter not created"}
+	}
 
 	if len(args) != 1 {
 		return Value{typ: "error", str: "ERR wrong number of arguments for `gloom_add` command"}
@@ -153,12 +161,20 @@ func gloomAdd(args []Value) Value {
 
 	key := args[0].bulk
 
-	gloomFilter.AddItem(key)
+	err := gloomFilter.AddItem(key)
+
+	if err != nil {
+		return Value{typ: "error", str: fmt.Sprintf("%v", err)}
+	}
 
 	return Value{typ: "string", str: "ADDED"}
 }
 
-func gloomCheck(args []Value) Value {
+func gloomDelete(args []Value) Value {
+
+	if gloomFilter == nil {
+		return Value{typ: "error", str: "Gloom Filter not created"}
+	}
 
 	if len(args) != 1 {
 		return Value{typ: "error", str: "ERR wrong number of arguments for `gloom_check` command"}
@@ -166,7 +182,31 @@ func gloomCheck(args []Value) Value {
 
 	key := args[0].bulk
 
-	ok := gloomFilter.CheckMembership(key)
+	err := gloomFilter.RemoveItem(key)
+
+	if err != nil {
+		return Value{typ: "error", str: fmt.Sprintf("%v", err)}
+	}
+
+	return Value{typ: "string", str: "Key removed"}
+}
+func gloomLookup(args []Value) Value {
+
+	if gloomFilter == nil {
+		return Value{typ: "error", str: "Gloom Filter not created"}
+	}
+
+	if len(args) != 1 {
+		return Value{typ: "error", str: "ERR wrong number of arguments for `gloom_check` command"}
+	}
+
+	key := args[0].bulk
+
+	ok, err := gloomFilter.Lookup(key)
+
+	if err != nil {
+		return Value{typ: "error", str: fmt.Sprintf("%v", err)}
+	}
 
 	return Value{typ: "string", str: strconv.FormatBool(ok)}
 }

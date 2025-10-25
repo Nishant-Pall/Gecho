@@ -31,15 +31,15 @@ func BasicHash(f *GloomFilter, s string) uint64 {
 type GloomFilterHashFunc func(*GloomFilter, string) uint64
 
 type GloomFilter struct {
-	gloomArr []int
+	gloomArr []uint64
 	seed     maphash.Seed
-	len      int
+	len      uint64
 	hash     maphash.Hash
 	hashArr  []func(string) uint64
 	hashLen  int
 }
 
-func (gloomFilter *GloomFilter) CreateGloomFilter(length int, hashes int, hashFunc GloomFilterHashFunc) error {
+func (gloomFilter *GloomFilter) CreateGloomFilter(length uint64, hashes uint64, hashFunc GloomFilterHashFunc) error {
 	if length < 1 {
 		return fmt.Errorf("length cannot be less than 1")
 	}
@@ -54,14 +54,14 @@ func (gloomFilter *GloomFilter) CreateGloomFilter(length int, hashes int, hashFu
 }
 
 func (f *GloomFilter) CreateGloomArr() {
-	f.gloomArr = make([]int, f.len)
+	f.gloomArr = make([]uint64, f.len)
 }
 
 func (f *GloomFilter) CreateSeed() {
 	f.seed = maphash.MakeSeed()
 }
 
-func (f *GloomFilter) GenerateHashFunctions(hashes int, hashFunc GloomFilterHashFunc) {
+func (f *GloomFilter) GenerateHashFunctions(hashes uint64, hashFunc GloomFilterHashFunc) {
 	f.hashArr = make([]func(string) uint64, hashes)
 
 	for index := range f.hashArr {
@@ -75,25 +75,44 @@ func (f *GloomFilter) GenerateHashFunctions(hashes int, hashFunc GloomFilterHash
 
 }
 
-func (f *GloomFilter) AddItem(s string) {
+func (f *GloomFilter) AddItem(s string) error {
 
 	for _, hashFunc := range f.hashArr {
 		hashInd := f.ModHash(hashFunc(s))
 
-		f.gloomArr[hashInd] = 1
+		f.gloomArr[hashInd] += 1
 	}
+	fmt.Printf("%v", f.gloomArr)
+	return nil
 }
 
-func (f *GloomFilter) CheckMembership(s string) bool {
+func (f *GloomFilter) RemoveItem(s string) error {
+
+	ok, _ := f.Lookup(s)
+	if !ok {
+		return fmt.Errorf("Key does not exist")
+	}
 
 	for _, hashFunc := range f.hashArr {
 		hashInd := f.ModHash(hashFunc(s))
 
-		if f.gloomArr[hashInd] != 1 {
-			return false
+		if f.gloomArr[hashInd] > 0 {
+			f.gloomArr[hashInd] -= 1
 		}
 	}
-	return true
+	return nil
+}
+
+func (f *GloomFilter) Lookup(s string) (bool, error) {
+
+	for _, hashFunc := range f.hashArr {
+		hashInd := f.ModHash(hashFunc(s))
+
+		if f.gloomArr[hashInd] > 0 {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (f *GloomFilter) ModHash(hash uint64) uint64 {
