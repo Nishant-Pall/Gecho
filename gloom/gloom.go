@@ -64,7 +64,6 @@ func (f *BaseGloomFilter) AddItem(s string) error {
 
 		f.gloomArr[hashInd] += 1
 	}
-	fmt.Printf("%v", f.gloomArr)
 	return nil
 }
 
