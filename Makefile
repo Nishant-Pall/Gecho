@@ -1,9 +1,9 @@
-.PHONY: echo-build
-echo-build:
-	go build main.go handler.go resp.go aof.go
+.PHONY: gecho-build
+gecho-build:
+	go build main.go gloom_handler.go handler.go resp.go aof.go
 
-.PHONY: echo-run
-echo-run:
+.PHONY: gecho-run
+gecho-run:
 	./main
 
-echo-up: echo-build echo-run
+gecho-up: gecho-build gecho-run

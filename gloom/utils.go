@@ -2,13 +2,13 @@ package gloom
 
 import "hash/fnv"
 
-type GloomFilterHashFunc func(*GloomFilter, string) uint64
+type GloomFilterHashFunc func(*BaseGloomFilter, string) uint64
 
-func NewGloomFilter() *GloomFilter {
-	return new(GloomFilter)
+func NewGloomFilter() *BaseGloomFilter {
+	return new(BaseGloomFilter)
 }
 
-func MapHash(f *GloomFilter, s string) uint64 {
+func MapHash(f *BaseGloomFilter, s string) uint64 {
 
 	f.hash.SetSeed(f.seed)
 	f.hash.WriteString(s)
@@ -17,7 +17,7 @@ func MapHash(f *GloomFilter, s string) uint64 {
 	return str
 }
 
-func BasicHash(f *GloomFilter, s string) uint64 {
+func BasicHash(f *BaseGloomFilter, s string) uint64 {
 
 	h := fnv.New32a()
 	h.Write([]byte(s))

@@ -6,13 +6,13 @@ import (
 	"math/rand/v2"
 )
 
-type _GloomFilter interface {
+type GloomFilter interface {
 	AddItem(s string) error
 	RemoveItem(s string) error
 	Lookup(s string) (bool, error)
 }
 
-type GloomFilter struct {
+type BaseGloomFilter struct {
 	gloomArr []uint64
 	seed     maphash.Seed
 	len      uint64
@@ -21,7 +21,7 @@ type GloomFilter struct {
 	hashLen  int
 }
 
-func (gloomFilter *GloomFilter) CreateGloomFilter(length uint64, hashes uint64, hashFunc GloomFilterHashFunc) error {
+func (gloomFilter *BaseGloomFilter) CreateGloomFilter(length uint64, hashes uint64, hashFunc GloomFilterHashFunc) error {
 	if length < 1 {
 		return fmt.Errorf("length cannot be less than 1")
 	}
@@ -35,15 +35,15 @@ func (gloomFilter *GloomFilter) CreateGloomFilter(length uint64, hashes uint64, 
 	return nil
 }
 
-func (f *GloomFilter) CreateGloomArr() {
+func (f *BaseGloomFilter) CreateGloomArr() {
 	f.gloomArr = make([]uint64, f.len)
 }
 
-func (f *GloomFilter) CreateSeed() {
+func (f *BaseGloomFilter) CreateSeed() {
 	f.seed = maphash.MakeSeed()
 }
 
-func (f *GloomFilter) GenerateHashFunctions(hashes uint64, hashFunc GloomFilterHashFunc) {
+func (f *BaseGloomFilter) GenerateHashFunctions(hashes uint64, hashFunc GloomFilterHashFunc) {
 	f.hashArr = make([]func(string) uint64, hashes)
 
 	for index := range f.hashArr {
@@ -57,7 +57,7 @@ func (f *GloomFilter) GenerateHashFunctions(hashes uint64, hashFunc GloomFilterH
 
 }
 
-func (f *GloomFilter) AddItem(s string) error {
+func (f *BaseGloomFilter) AddItem(s string) error {
 
 	for _, hashFunc := range f.hashArr {
 		hashInd := f.ModHash(hashFunc(s))
@@ -68,7 +68,7 @@ func (f *GloomFilter) AddItem(s string) error {
 	return nil
 }
 
-func (f *GloomFilter) RemoveItem(s string) error {
+func (f *BaseGloomFilter) RemoveItem(s string) error {
 
 	ok, _ := f.Lookup(s)
 	if !ok {
@@ -85,7 +85,7 @@ func (f *GloomFilter) RemoveItem(s string) error {
 	return nil
 }
 
-func (f *GloomFilter) Lookup(s string) (bool, error) {
+func (f *BaseGloomFilter) Lookup(s string) (bool, error) {
 
 	for _, hashFunc := range f.hashArr {
 		hashInd := f.ModHash(hashFunc(s))
@@ -97,6 +97,6 @@ func (f *GloomFilter) Lookup(s string) (bool, error) {
 	return false, nil
 }
 
-func (f *GloomFilter) ModHash(hash uint64) uint64 {
+func (f *BaseGloomFilter) ModHash(hash uint64) uint64 {
 	return hash % uint64(f.len)
 }
