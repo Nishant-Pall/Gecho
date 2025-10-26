@@ -7,7 +7,7 @@ import (
 	"github.com/Nishant-Pall/Gecho/gloom"
 )
 
-var gloomFilter gloom.GloomFilter
+var gloomFilter *gloom.BaseGloomFilter
 
 func GloomCreate(args []Value) Value {
 
@@ -24,8 +24,6 @@ func GloomCreate(args []Value) Value {
 		return Value{typ: "error", str: "Invalid input: number of hashes"}
 	}
 
-	fmt.Printf("%v", gloomFilter)
-	gloomFilter := new(gloom.BaseGloomFilter)
 	gloomFilter = gloom.NewGloomFilter()
 	gloomFilter.CreateGloomFilter(uint64(len), uint64(hashes), gloom.MapHash)
 	return Value{typ: "string", str: "OK"}
@@ -42,7 +40,6 @@ func GloomLookup(args []Value) Value {
 	}
 
 	key := args[0].bulk
-
 	ok, err := gloomFilter.Lookup(key)
 
 	if err != nil {
@@ -63,7 +60,6 @@ func GloomAdd(args []Value) Value {
 	}
 
 	key := args[0].bulk
-
 	err := gloomFilter.AddItem(key)
 
 	if err != nil {
@@ -84,7 +80,6 @@ func GloomDelete(args []Value) Value {
 	}
 
 	key := args[0].bulk
-
 	err := gloomFilter.RemoveItem(key)
 
 	if err != nil {
