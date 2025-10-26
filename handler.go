@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -8,6 +9,7 @@ var Handlers = map[string]func([]Value) Value{
 	"PING":         pong,
 	"GET":          get,
 	"SET":          set,
+	"DELETE":       _delete,
 	"HGET":         hget,
 	"HSET":         hset,
 	"HGETALL":      hgetall,
@@ -38,6 +40,20 @@ func get(args []Value) Value {
 		return Value{typ: "null"}
 	}
 	return Value{typ: "bulk", bulk: value}
+}
+
+func _delete(args []Value) Value {
+	if len(args) != 1 {
+		return Value{typ: "error", str: "ERR wrong number of arguments for `delete` command"}
+	}
+
+	key := args[0].bulk
+
+	SETsMu.RLock()
+	delete(SETs, key)
+	SETsMu.RUnlock()
+
+	return Value{typ: "string", str: fmt.Sprintf("key '%v' delete", key)}
 }
 
 func set(args []Value) Value {

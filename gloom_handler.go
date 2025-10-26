@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/Nishant-Pall/Gecho/gloom"
 )
 
+var GloomMU = sync.RWMutex{}
 var gloomFilter *gloom.BaseGloomFilter
 
 func GloomCreate(args []Value) Value {
@@ -24,9 +26,16 @@ func GloomCreate(args []Value) Value {
 		return Value{typ: "error", str: "Invalid input: number of hashes"}
 	}
 
-	gloomFilter = gloom.NewGloomFilter()
-	gloomFilter.CreateGloomFilter(uint64(len), uint64(hashes), gloom.MapHash)
-	return Value{typ: "string", str: "OK"}
+	GloomMU.Lock()
+	filter, err := gloom.CreateGloomFilter(uint64(len), uint64(hashes), gloom.MapHash)
+	gloomFilter = filter
+	GloomMU.Unlock()
+
+	if err != nil {
+		return Value{typ: "error", str: "Error creating Gloom Filter"}
+	}
+
+	return Value{typ: "string", str: fmt.Sprintf("Gloom filter created of length: %v", gloomFilter.Len())}
 }
 
 func GloomLookup(args []Value) Value {
@@ -40,7 +49,10 @@ func GloomLookup(args []Value) Value {
 	}
 
 	key := args[0].bulk
+
+	GloomMU.Lock()
 	ok, err := gloomFilter.Lookup(key)
+	GloomMU.Unlock()
 
 	if err != nil {
 		return Value{typ: "error", str: fmt.Sprintf("%v", err)}
@@ -60,7 +72,10 @@ func GloomAdd(args []Value) Value {
 	}
 
 	key := args[0].bulk
+
+	GloomMU.Lock()
 	err := gloomFilter.AddItem(key)
+	GloomMU.Unlock()
 
 	if err != nil {
 		return Value{typ: "error", str: fmt.Sprintf("%v", err)}
@@ -80,7 +95,10 @@ func GloomDelete(args []Value) Value {
 	}
 
 	key := args[0].bulk
+
+	GloomMU.Lock()
 	err := gloomFilter.RemoveItem(key)
+	GloomMU.Unlock()
 
 	if err != nil {
 		return Value{typ: "error", str: fmt.Sprintf("%v", err)}

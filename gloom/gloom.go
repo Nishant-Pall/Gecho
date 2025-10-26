@@ -21,18 +21,19 @@ type BaseGloomFilter struct {
 	hashLen  int
 }
 
-func (gloomFilter *BaseGloomFilter) CreateGloomFilter(length uint64, hashes uint64, hashFunc GloomFilterHashFunc) error {
+func CreateGloomFilter(length uint64, hashes uint64, hashFunc GloomFilterHashFunc) (*BaseGloomFilter, error) {
 	if length < 1 {
-		return fmt.Errorf("length cannot be less than 1")
+		return nil, fmt.Errorf("length cannot be less than 1")
 	}
 
+	gloomFilter := NewGloomFilter()
 	gloomFilter.len = length
 	gloomFilter.CreateGloomArr()
 	gloomFilter.CreateSeed()
 	gloomFilter.GenerateHashFunctions(hashes, hashFunc)
 	gloomFilter.hashLen = len(gloomFilter.hashArr)
 
-	return nil
+	return gloomFilter, nil
 }
 
 func (f *BaseGloomFilter) CreateGloomArr() {
@@ -98,4 +99,8 @@ func (f *BaseGloomFilter) Lookup(s string) (bool, error) {
 
 func (f *BaseGloomFilter) ModHash(hash uint64) uint64 {
 	return hash % uint64(f.len)
+}
+
+func (f *BaseGloomFilter) Len() uint64 {
+	return f.len
 }
